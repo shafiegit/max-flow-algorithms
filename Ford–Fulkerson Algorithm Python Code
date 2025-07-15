@@ -1,0 +1,54 @@
+from collections import defaultdict
+
+class Graph:
+    def __init__(self, vertices):
+        self.graph = defaultdict(dict)
+        self.V = vertices
+
+    def add_edge(self, u, v, capacity):
+        self.graph[u][v] = self.graph[u].get(v, 0) + capacity
+        if u not in self.graph[v]:
+            self.graph[v][u] = 0
+
+    def _dfs(self, residual, s, t, visited, path):
+        visited.add(s)
+        if s == t:
+            return path
+        for neighbor in residual[s]:
+            capacity = residual[s][neighbor]
+            if capacity > 0 and neighbor not in visited:
+                result = self._dfs(residual, neighbor, t, visited, path + [(s, neighbor)])
+                if result is not None:
+                    return result
+        return None
+
+    def ford_fulkerson(self, source, sink):
+        residual = {u: dict(v) for u, v in self.graph.items()}
+        max_flow = 0
+
+        while True:
+            visited = set()
+            path = self._dfs(residual, source, sink, visited, [])
+            if path is None:
+                break
+            flow = min(residual[u][v] for u, v in path)
+            for u, v in path:
+                residual[u][v] -= flow
+                residual[v][u] += flow
+            max_flow += flow
+            print(f"Augmenting path: {path} with flow: {flow}")
+        return max_flow
+
+# Example usage
+g = Graph(6)
+g.add_edge('s', 'a', 5)
+g.add_edge('s', 'b', 2)
+g.add_edge('a', 'b', 2)
+g.add_edge('a', 'c', 3)
+g.add_edge('b', 'd', 4)
+g.add_edge('c', 'd', 1)
+g.add_edge('c', 't', 2)
+g.add_edge('d', 't', 5)
+
+max_flow = g.ford_fulkerson('s', 't')
+print("Maximum Flow:", max_flow)
